@@ -1,0 +1,25 @@
+#! /bin/bash
+containerName="pgadmin"
+
+printf "\nChecking whether ${containerName} container exists and is stopped ...\n"
+docker ps -f status=exited -f name=${containerName} | grep pgadmin >/dev/null
+if [ $? == 0 ]
+then
+  printf "${containerName} is stopped. Starting it ...\n"
+  docker start pgadmin
+else
+  printf "${containerName} does not exist. Creating and starting it ...\n"
+  mkdir -p /data/pgadmin
+  sudo chown -R 5050:5050 /data/pgadmin
+  docker run -p 8088:80 \
+    --name pgadmin \
+    --restart unless-stopped \
+    -v /data/pgadmin:/var/lib/pgadmin \
+    -e "PGADMIN_CONFIG_SERVER_MODE"=False \
+    -e "PGADMIN_DEFAULT_EMAIL=notused@notused.com" \
+    -e "PGADMIN_DEFAULT_PASSWORD=notused" \
+    -d dpage/pgadmin4 >/dev/null
+fi
+
+printf "\nDone\n"
+
